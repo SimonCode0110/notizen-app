@@ -1,0 +1,347 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #000;
+}
+
+/* Header */
+.header {
+  background-color: #000;
+  color: #e0ac00;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.title-editable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+
+.title-editable:hover {
+  background-color: rgba(224, 172, 0, 0.1);
+}
+
+.title-input {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background-color: #000;
+  color: #e0ac00;
+  padding: 0.3rem 0.6rem;
+  outline: none;
+  font-family: inherit;
+  min-width: 250px;
+}
+
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.stats span {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+}
+
+/* Main Content */
+.main {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Note Item */
+.note-item {
+  background-color: #1a1a1a;
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+  cursor: grab;
+}
+
+.note-item:active {
+  cursor: grabbing;
+}
+
+.note-item:hover {
+  border-color: #e0ac00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.note-item.drag-over {
+  border-color: #e0ac00;
+  border-style: dashed;
+  background-color: #2a2a2a;
+}
+
+.note-item.completed {
+  opacity: 0.6;
+}
+
+.note-item.completed .note-text {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.note-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Checkbox */
+.checkbox {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border: 2px solid #e0ac00;
+  border-radius: 50%;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.checkbox:hover {
+  background-color: rgba(224, 172, 0, 0.1);
+  transform: scale(1.1);
+}
+
+.checkbox .checkmark {
+  color: #000;
+  font-size: 1.2rem;
+  font-weight: bold;
+  background-color: #e0ac00;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Note Text */
+.note-text {
+  flex: 1;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* Delete Button */
+.delete-btn {
+  background-color: transparent;
+  border: 2px solid #ad0808;
+  color: #ad0808;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.delete-btn:hover {
+  background-color: #ad0808;
+  color: #000;
+  transform: scale(1.1);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #666;
+}
+
+.empty-state p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+/* Footer */
+.footer {
+  background-color: #000;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 -2px 10px rgba(224, 172, 0, 0.3);
+}
+
+.input-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 1rem;
+}
+
+.note-input {
+  flex: 1;
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  border: 2px solid #000;
+  border-radius: 8px;
+  background-color: #949494;
+  color: #000;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.note-input:focus {
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.note-input::placeholder {
+  color: #000;
+}
+
+.add-btn {
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background-color: #000;
+  color: #e0ac00;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.add-btn:hover:not(:disabled) {
+  background-color: #222;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .stats {
+    gap: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .main {
+    padding: 1.5rem 1rem;
+  }
+
+  .note-item {
+    padding: 0.8rem;
+  }
+
+  .note-content {
+    gap: 0.8rem;
+  }
+
+  .checkbox {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+  }
+
+  .note-text {
+    font-size: 0.95rem;
+  }
+
+  .footer {
+    padding: 1rem 1.5rem;
+  }
+
+  .input-container {
+    flex-direction: column;
+  }
+
+  .add-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.3rem;
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .main {
+    padding: 1rem 0.8rem;
+  }
+
+  .note-text {
+    font-size: 0.9rem;
+  }
+
+  .delete-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 1.3rem;
+  }
+}
