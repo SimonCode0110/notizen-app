@@ -154,13 +154,20 @@ function App() {
     const currentY = touch.clientY
     const diff = Math.abs(currentY - touchStartY)
 
-    // Wenn Bewegung > 30px, dann als Drag aktivieren
-    if (diff > 30) {
-      // Verhindere Scrolling nur wenn Drag aktiv
+    // Wenn bereits am Draggen, verhindere normales Scrollen
+    if (isTouchDragging) {
       e.preventDefault()
-      
-      if (!isTouchDragging) setIsTouchDragging(true)
-      // Finde die Note unter dem Touch-Punkt
+    }
+
+    // Wenn Bewegung > 30px, dann als Drag aktivieren
+    if (diff > 30 && !isTouchDragging) {
+      // Verhindere Scrolling ab jetzt
+      e.preventDefault()
+      setIsTouchDragging(true)
+    }
+    
+    // Finde die Note unter dem Touch-Punkt nur wenn Drag aktiv
+    if (isTouchDragging) {
       const element = document.elementFromPoint(touch.clientX, touch.clientY)
       const noteElement = element?.closest('.note-item')
       
