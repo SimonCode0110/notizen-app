@@ -22,6 +22,7 @@ function App() {
   const [touchStartNote, setTouchStartNote] = useState(null)
   const [touchStartY, setTouchStartY] = useState(0)
   const [touchCurrentNote, setTouchCurrentNote] = useState(null)
+  const [isTouchDragging, setIsTouchDragging] = useState(false)
   const mainScrollRef = useRef(null)
 
   // Speichere Notizen in localStorage bei Änderungen
@@ -134,6 +135,7 @@ function App() {
     setTouchStartY(e.touches[0].clientY)
     setDraggedNote(note)
     setTouchCurrentNote(null)
+    setIsTouchDragging(false)
   }
 
   const handleTouchMove = (e) => {
@@ -162,6 +164,7 @@ function App() {
 
     // Wenn Bewegung > 10px, dann als Drag aktivieren
     if (diff > 10) {
+      if (!isTouchDragging) setIsTouchDragging(true)
       // Finde die Note unter dem Touch-Punkt
       const element = document.elementFromPoint(touch.clientX, touch.clientY)
       const noteElement = element?.closest('.note-item')
@@ -182,10 +185,11 @@ function App() {
       setTouchStartNote(null)
       setTouchCurrentNote(null)
       setDraggedNote(null)
+      setIsTouchDragging(false)
       return
     }
 
-    if (touchCurrentNote && touchCurrentNote.id !== touchStartNote.id) {
+    if (isTouchDragging && touchCurrentNote && touchCurrentNote.id !== touchStartNote.id) {
       // Führe Reordering durch
       const updatedNotes = [...notes]
       const draggedIndex = updatedNotes.findIndex(n => n.id === touchStartNote.id)
@@ -205,7 +209,25 @@ function App() {
     setTouchStartNote(null)
     setTouchCurrentNote(null)
     setDraggedNote(null)
+    setIsTouchDragging(false)
   }
+
+  useEffect(() => {
+    if (!touchStartNote) return
+
+    const onMove = (e) => handleTouchMove(e)
+    const onEnd = () => handleTouchEnd()
+
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('touchend', onEnd)
+    window.addEventListener('touchcancel', onEnd)
+
+    return () => {
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onEnd)
+      window.removeEventListener('touchcancel', onEnd)
+    }
+  }, [touchStartNote, handleTouchMove, handleTouchEnd])
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -264,8 +286,6 @@ function App() {
       <main className="main" ref={mainScrollRef}>
         <div 
           className="notes-container"
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
         >
           {sortedNotes.map((note) => (
             <div
