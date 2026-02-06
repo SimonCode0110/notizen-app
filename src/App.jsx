@@ -250,24 +250,22 @@ function App() {
       }
 
       const viewportHeight = window.innerHeight
-      const topThreshold = 100
-      const bottomThreshold = viewportHeight - 100
-      const deadZone = 20
+      const topThreshold = 120
+      const bottomThreshold = viewportHeight - 120
       
-      // Nur scrollen wenn wir wirklich am Rand sind
-      if (y < topThreshold && y > deadZone) {
-        // Scroll nach oben nur wenn noch Platz ist
+      // Scroll nach oben wenn Finger am oberen Rand
+      if (y < topThreshold) {
         if (container.scrollTop > 0) {
           const factor = (topThreshold - y) / topThreshold
-          const speed = Math.ceil(factor * 10)
+          const speed = Math.ceil(factor * 15)
           container.scrollTop -= speed
         }
-      } else if (y > bottomThreshold && y < viewportHeight - deadZone) {
-        // Scroll nach unten nur wenn noch Platz ist
+      } else if (y > bottomThreshold) {
+        // Scroll nach unten wenn Finger am unteren Rand
         const maxScroll = container.scrollHeight - container.clientHeight
         if (container.scrollTop < maxScroll) {
           const factor = (y - bottomThreshold) / (viewportHeight - bottomThreshold)
-          const speed = Math.ceil(factor * 10)
+          const speed = Math.ceil(factor * 15)
           container.scrollTop += speed
         }
       }
