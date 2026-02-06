@@ -19,6 +19,8 @@ function App() {
   
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [tempTitle, setTempTitle] = useState(title)
+  const [touchStartNote, setTouchStartNote] = useState(null)
+  const [touchStartY, setTouchStartY] = useState(0)
 
   // Speichere Notizen in localStorage bei Änderungen
   useEffect(() => {
@@ -119,6 +121,54 @@ function App() {
     setDragOverNote(null)
   }
 
+  // Touch Events für Smartphone-Support
+  const handleTouchStart = (e, note) => {
+    setTouchStartNote(note)
+    setTouchStartY(e.touches[0].clientY)
+    setDraggedNote(note)
+  }
+
+  const handleTouchMove = (e, note) => {
+    if (!touchStartNote) return
+    
+    const currentY = e.touches[0].clientY
+    const diff = Math.abs(currentY - touchStartY)
+    
+    // Wenn Bewegung > 10px, dann als Drag aktivieren
+    if (diff > 10 && note.id !== touchStartNote?.id) {
+      setDragOverNote(note)
+    }
+  }
+
+  const handleTouchEnd = (e, targetNote) => {
+    e.preventDefault()
+    
+    if (!touchStartNote || touchStartNote.id === targetNote.id) {
+      setTouchStartNote(null)
+      setDraggedNote(null)
+      setDragOverNote(null)
+      return
+    }
+
+    // Gleiche Logik wie Drop
+    const updatedNotes = [...notes]
+    const draggedIndex = updatedNotes.findIndex(n => n.id === touchStartNote.id)
+    const targetIndex = updatedNotes.findIndex(n => n.id === targetNote.id)
+
+    const [removed] = updatedNotes.splice(draggedIndex, 1)
+    updatedNotes.splice(targetIndex, 0, removed)
+
+    const reorderedNotes = updatedNotes.map((note, index) => ({
+      ...note,
+      order: index
+    }))
+
+    setNotes(reorderedNotes)
+    setTouchStartNote(null)
+    setDraggedNote(null)
+    setDragOverNote(null)
+  }
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       addNote()
@@ -187,6 +237,10 @@ function App() {
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, note)}
               onDragEnd={handleDragEnd}
+              onTouchStart={(e) => handleTouchStart(e, note)}
+              onTouchMove={(e) => handleTouchMove(e, note)}
+              onTouchEnd={(e) => handleTouchEnd(e, note)}
+              style={{ touchAction: 'none' }}
             >
               <div className="note-content">
                 <div 
