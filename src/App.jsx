@@ -22,7 +22,7 @@ function App() {
   const [touchStartNote, setTouchStartNote] = useState(null)
   const [touchStartY, setTouchStartY] = useState(0)
   const [touchCurrentNote, setTouchCurrentNote] = useState(null)
-  const notesContainerRef = useRef(null)
+  const mainScrollRef = useRef(null)
 
   // Speichere Notizen in localStorage bei Änderungen
   useEffect(() => {
@@ -147,7 +147,7 @@ function App() {
     const diff = Math.abs(currentY - touchStartY)
     
     // Auto-Scroll wenn Finger nah am Rand ist
-    const container = notesContainerRef.current
+    const container = mainScrollRef.current
     if (container) {
       const rect = container.getBoundingClientRect()
       const edgeThreshold = 60
@@ -261,10 +261,9 @@ function App() {
         </div>
       </header>
 
-      <main className="main">
+      <main className="main" ref={mainScrollRef}>
         <div 
           className="notes-container"
-          ref={notesContainerRef}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
