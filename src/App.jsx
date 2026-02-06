@@ -124,62 +124,68 @@ function App() {
 
   // Touch Events für Smartphone-Support
   const handleTouchStart = (e, note) => {
-    if (e.target.closest('.delete-btn')) return // Löschen-Button nicht blockieren
+    if (e.target.closest('.delete-btn') || e.target.closest('.checkbox')) return
     
     setTouchStartNote(note)
     setTouchStartY(e.touches[0].clientY)
     setDraggedNote(note)
+    setTouchCurrentNote(null)
   }
 
-  const handleTouchMove = (e, note) => {
+  const handleTouchMove = (e) => {
     if (!touchStartNote) return
     
-    const currentY = e.touches[0].clientY
+    const touch = e.touches[0]
+    const currentY = touch.clientY
     const diff = Math.abs(currentY - touchStartY)
     
-    // Wenn Bewegung > 15px, dann als Drag aktivieren
-    if (diff > 15) {
-      if (note.id !== touchStartNote.id) {
-        setTouchCurrentNote(note)
+    // Wenn Bewegung > 20px, dann als Drag aktivieren und Scrolling verhindern
+    if (diff > 20) {
+      e.preventDefault()
+      
+      // Finde die Note unter dem Touch-Punkt
+      const element = document.elementFromPoint(touch.clientX, touch.clientY)
+      const noteElement = element?.closest('.note-item')
+      
+      if (noteElement) {
+        const noteId = Number(noteElement.getAttribute('data-note-id'))
+        const targetNote = notes.find(n => n.id === noteId)
+        
+        if (targetNote && targetNote.id !== touchStartNote.id) {
+          setTouchCurrentNote(targetNote)
+        }
       }
     }
   }
 
-  const handleTouchEnd = (e, targetNote) => {
-    if (!touchStartNote || !touchCurrentNote) {
+  const handleTouchEnd = () => {
+    if (!touchStartNote) {
       setTouchStartNote(null)
       setTouchCurrentNote(null)
       setDraggedNote(null)
-      setDragOverNote(null)
       return
     }
 
-    if (touchStartNote.id === targetNote.id) {
-      setTouchStartNote(null)
-      setTouchCurrentNote(null)
-      setDraggedNote(null)
-      setDragOverNote(null)
-      return
+    if (touchCurrentNote && touchCurrentNote.id !== touchStartNote.id) {
+      // Führe Reordering durch
+      const updatedNotes = [...notes]
+      const draggedIndex = updatedNotes.findIndex(n => n.id === touchStartNote.id)
+      const targetIndex = updatedNotes.findIndex(n => n.id === touchCurrentNote.id)
+
+      const [removed] = updatedNotes.splice(draggedIndex, 1)
+      updatedNotes.splice(targetIndex, 0, removed)
+
+      const reorderedNotes = updatedNotes.map((note, index) => ({
+        ...note,
+        order: index
+      }))
+
+      setNotes(reorderedNotes)
     }
 
-    // Gleiche Logik wie Drop
-    const updatedNotes = [...notes]
-    const draggedIndex = updatedNotes.findIndex(n => n.id === touchStartNote.id)
-    const targetIndex = updatedNotes.findIndex(n => n.id === targetNote.id)
-
-    const [removed] = updatedNotes.splice(draggedIndex, 1)
-    updatedNotes.splice(targetIndex, 0, removed)
-
-    const reorderedNotes = updatedNotes.map((note, index) => ({
-      ...note,
-      order: index
-    }))
-
-    setNotes(reorderedNotes)
     setTouchStartNote(null)
     setTouchCurrentNote(null)
     setDraggedNote(null)
-    setDragOverNote(null)
   }
 
   const handleKeyPress = (e) => {
@@ -237,13 +243,18 @@ function App() {
       </header>
 
       <main className="main">
-        <div className="notes-container">
+        <div 
+          className="notes-container"
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {sortedNotes.map((note) => (
             <div
               key={note.id}
+              data-note-id={note.id}
               className={`note-item ${note.completed ? 'completed' : ''} ${
                 touchCurrentNote?.id === note.id ? 'drag-over' : ''
-              }`}
+              } ${draggedNote?.id === note.id ? 'dragging' : ''}`}
               draggable
               onDragStart={(e) => handleDragStart(e, note)}
               onDragOver={(e) => handleDragOver(e, note)}
@@ -251,8 +262,6 @@ function App() {
               onDrop={(e) => handleDrop(e, note)}
               onDragEnd={handleDragEnd}
               onTouchStart={(e) => handleTouchStart(e, note)}
-              onTouchMove={(e) => handleTouchMove(e, note)}
-              onTouchEnd={(e) => handleTouchEnd(e, note)}
             >
               <div className="note-content">
                 <div 

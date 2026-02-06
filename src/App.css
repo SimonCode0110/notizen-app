@@ -120,6 +120,11 @@ body {
   background-color: #2a2a2a;
 }
 
+.note-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
 .note-item.completed {
   opacity: 0.6;
 }
