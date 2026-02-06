@@ -223,14 +223,9 @@ function App() {
   }
 
   useEffect(() => {
-    if (!touchStartNote) return
+    if (!touchStartNote || !isTouchDragging) return
 
     const step = () => {
-      if (!isTouchDragging) {
-        autoScrollRafRef.current = requestAnimationFrame(step)
-        return
-      }
-
       const container = getScrollContainer()
       if (!container) {
         autoScrollRafRef.current = requestAnimationFrame(step)
@@ -243,9 +238,9 @@ function App() {
         return
       }
 
-      const edgeThreshold = 60
-      const scrollSpeed = 12
-
+      const edgeThreshold = 80
+      const maxScrollSpeed = 15
+      
       let top = 0
       let bottom = window.innerHeight
 
@@ -255,11 +250,24 @@ function App() {
         bottom = rect.bottom
       }
 
-      if (y < top + edgeThreshold) {
+      let shouldScroll = false
+      
+      // Scroll nach oben
+      if (y < top + edgeThreshold && container.scrollTop > 0) {
+        const distance = top + edgeThreshold - y
+        const scrollSpeed = Math.min(maxScrollSpeed, Math.max(2, distance / 8))
         container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed)
-      } else if (y > bottom - edgeThreshold) {
+        shouldScroll = true
+      } 
+      // Scroll nach unten
+      else if (y > bottom - edgeThreshold) {
         const maxScroll = container.scrollHeight - container.clientHeight
-        container.scrollTop = Math.min(maxScroll, container.scrollTop + scrollSpeed)
+        if (container.scrollTop < maxScroll) {
+          const distance = y - (bottom - edgeThreshold)
+          const scrollSpeed = Math.min(maxScrollSpeed, Math.max(2, distance / 8))
+          container.scrollTop = Math.min(maxScroll, container.scrollTop + scrollSpeed)
+          shouldScroll = true
+        }
       }
 
       autoScrollRafRef.current = requestAnimationFrame(step)
