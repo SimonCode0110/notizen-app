@@ -250,23 +250,28 @@ function App() {
       }
 
       const viewportHeight = window.innerHeight
-      const topThreshold = 120
-      const bottomThreshold = viewportHeight - 120
+      const topThreshold = 150
+      const bottomThreshold = viewportHeight - 150
       
-      // Scroll nach oben wenn Finger am oberen Rand
-      if (y < topThreshold) {
+      // Scroll nach oben wenn Finger sehr nah am oberen Rand ist
+      if (y < topThreshold && y >= 0) {
         if (container.scrollTop > 0) {
-          const factor = (topThreshold - y) / topThreshold
-          const speed = Math.ceil(factor * 15)
-          container.scrollTop -= speed
+          const distanceFromTop = Math.max(0, topThreshold - y)
+          const maxDistance = topThreshold
+          const factor = Math.pow(distanceFromTop / maxDistance, 0.8)
+          const speed = Math.ceil(factor * 20)
+          container.scrollTop = Math.max(0, container.scrollTop - speed)
         }
-      } else if (y > bottomThreshold) {
-        // Scroll nach unten wenn Finger am unteren Rand
+      } 
+      // Scroll nach unten wenn Finger sehr nah am unteren Rand ist
+      else if (y > bottomThreshold && y <= viewportHeight) {
         const maxScroll = container.scrollHeight - container.clientHeight
         if (container.scrollTop < maxScroll) {
-          const factor = (y - bottomThreshold) / (viewportHeight - bottomThreshold)
-          const speed = Math.ceil(factor * 15)
-          container.scrollTop += speed
+          const distanceFromBottom = Math.max(0, y - bottomThreshold)
+          const maxDistance = viewportHeight - bottomThreshold
+          const factor = Math.pow(distanceFromBottom / maxDistance, 0.8)
+          const speed = Math.ceil(factor * 20)
+          container.scrollTop = Math.min(maxScroll, container.scrollTop + speed)
         }
       }
 
