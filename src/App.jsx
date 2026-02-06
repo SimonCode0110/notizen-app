@@ -159,8 +159,8 @@ function App() {
       e.preventDefault()
     }
 
-    // Wenn Bewegung > 30px, dann als Drag aktivieren
-    if (diff > 30 && !isTouchDragging) {
+    // Wenn Bewegung > 50px, dann als Drag aktivieren
+    if (diff > 50 && !isTouchDragging) {
       // Verhindere Scrolling ab jetzt
       e.preventDefault()
       setIsTouchDragging(true)
@@ -223,9 +223,20 @@ function App() {
   }
 
   useEffect(() => {
-    if (!touchStartNote || !isTouchDragging) return
+    if (!touchStartNote || !isTouchDragging) {
+      if (autoScrollRafRef.current) {
+        cancelAnimationFrame(autoScrollRafRef.current)
+        autoScrollRafRef.current = null
+      }
+      return
+    }
 
     const step = () => {
+      if (!isTouchDragging) {
+        autoScrollRafRef.current = null
+        return
+      }
+
       const container = getScrollContainer()
       if (!container) {
         autoScrollRafRef.current = requestAnimationFrame(step)
@@ -238,35 +249,26 @@ function App() {
         return
       }
 
-      const edgeThreshold = 80
-      const maxScrollSpeed = 15
+      const viewportHeight = window.innerHeight
+      const topThreshold = 100
+      const bottomThreshold = viewportHeight - 100
+      const deadZone = 20
       
-      let top = 0
-      let bottom = window.innerHeight
-
-      if (container !== document.scrollingElement && container !== document.documentElement && container !== document.body) {
-        const rect = container.getBoundingClientRect()
-        top = rect.top
-        bottom = rect.bottom
-      }
-
-      let shouldScroll = false
-      
-      // Scroll nach oben
-      if (y < top + edgeThreshold && container.scrollTop > 0) {
-        const distance = top + edgeThreshold - y
-        const scrollSpeed = Math.min(maxScrollSpeed, Math.max(2, distance / 8))
-        container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed)
-        shouldScroll = true
-      } 
-      // Scroll nach unten
-      else if (y > bottom - edgeThreshold) {
+      // Nur scrollen wenn wir wirklich am Rand sind
+      if (y < topThreshold && y > deadZone) {
+        // Scroll nach oben nur wenn noch Platz ist
+        if (container.scrollTop > 0) {
+          const factor = (topThreshold - y) / topThreshold
+          const speed = Math.ceil(factor * 10)
+          container.scrollTop -= speed
+        }
+      } else if (y > bottomThreshold && y < viewportHeight - deadZone) {
+        // Scroll nach unten nur wenn noch Platz ist
         const maxScroll = container.scrollHeight - container.clientHeight
         if (container.scrollTop < maxScroll) {
-          const distance = y - (bottom - edgeThreshold)
-          const scrollSpeed = Math.min(maxScrollSpeed, Math.max(2, distance / 8))
-          container.scrollTop = Math.min(maxScroll, container.scrollTop + scrollSpeed)
-          shouldScroll = true
+          const factor = (y - bottomThreshold) / (viewportHeight - bottomThreshold)
+          const speed = Math.ceil(factor * 10)
+          container.scrollTop += speed
         }
       }
 
