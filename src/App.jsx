@@ -24,6 +24,14 @@ function App() {
   const [touchCurrentNote, setTouchCurrentNote] = useState(null)
   const [isTouchDragging, setIsTouchDragging] = useState(false)
   const mainScrollRef = useRef(null)
+  const touchPositionRef = useRef({ x: 0, y: 0 })
+  const autoScrollRafRef = useRef(null)
+
+  const getScrollContainer = () => {
+    const container = mainScrollRef.current
+    if (container && container.scrollHeight > container.clientHeight) return container
+    return document.scrollingElement || document.documentElement
+  }
 
   // Speichere Notizen in localStorage bei Änderungen
   useEffect(() => {
@@ -131,6 +139,9 @@ function App() {
     // Verhindere Text-Selektion und Scrolling sofort
     e.preventDefault()
     
+    const touch = e.touches[0]
+    touchPositionRef.current = { x: touch.clientX, y: touch.clientY }
+
     setTouchStartNote(note)
     setTouchStartY(e.touches[0].clientY)
     setDraggedNote(note)
@@ -145,22 +156,9 @@ function App() {
     e.preventDefault()
     
     const touch = e.touches[0]
+    touchPositionRef.current = { x: touch.clientX, y: touch.clientY }
     const currentY = touch.clientY
     const diff = Math.abs(currentY - touchStartY)
-    
-    // Auto-Scroll wenn Finger nah am Rand ist
-    const container = mainScrollRef.current
-    if (container) {
-      const rect = container.getBoundingClientRect()
-      const edgeThreshold = 60
-      const scrollSpeed = 14
-
-      if (touch.clientY < rect.top + edgeThreshold) {
-        container.scrollBy({ top: -scrollSpeed, behavior: 'auto' })
-      } else if (touch.clientY > rect.bottom - edgeThreshold) {
-        container.scrollBy({ top: scrollSpeed, behavior: 'auto' })
-      }
-    }
 
     // Wenn Bewegung > 10px, dann als Drag aktivieren
     if (diff > 10) {
@@ -186,6 +184,10 @@ function App() {
       setTouchCurrentNote(null)
       setDraggedNote(null)
       setIsTouchDragging(false)
+      if (autoScrollRafRef.current) {
+        cancelAnimationFrame(autoScrollRafRef.current)
+        autoScrollRafRef.current = null
+      }
       return
     }
 
@@ -210,7 +212,64 @@ function App() {
     setTouchCurrentNote(null)
     setDraggedNote(null)
     setIsTouchDragging(false)
+    if (autoScrollRafRef.current) {
+      cancelAnimationFrame(autoScrollRafRef.current)
+      autoScrollRafRef.current = null
+    }
   }
+
+  useEffect(() => {
+    if (!touchStartNote) return
+
+    const step = () => {
+      if (!isTouchDragging) {
+        autoScrollRafRef.current = requestAnimationFrame(step)
+        return
+      }
+
+      const container = getScrollContainer()
+      if (!container) {
+        autoScrollRafRef.current = requestAnimationFrame(step)
+        return
+      }
+
+      const { y } = touchPositionRef.current
+      if (y == null) {
+        autoScrollRafRef.current = requestAnimationFrame(step)
+        return
+      }
+
+      const edgeThreshold = 60
+      const scrollSpeed = 12
+
+      let top = 0
+      let bottom = window.innerHeight
+
+      if (container !== document.scrollingElement && container !== document.documentElement && container !== document.body) {
+        const rect = container.getBoundingClientRect()
+        top = rect.top
+        bottom = rect.bottom
+      }
+
+      if (y < top + edgeThreshold) {
+        container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed)
+      } else if (y > bottom - edgeThreshold) {
+        const maxScroll = container.scrollHeight - container.clientHeight
+        container.scrollTop = Math.min(maxScroll, container.scrollTop + scrollSpeed)
+      }
+
+      autoScrollRafRef.current = requestAnimationFrame(step)
+    }
+
+    autoScrollRafRef.current = requestAnimationFrame(step)
+
+    return () => {
+      if (autoScrollRafRef.current) {
+        cancelAnimationFrame(autoScrollRafRef.current)
+        autoScrollRafRef.current = null
+      }
+    }
+  }, [touchStartNote, isTouchDragging])
 
   useEffect(() => {
     if (!touchStartNote) return
