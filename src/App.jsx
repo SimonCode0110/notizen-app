@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 function App() {
@@ -22,6 +22,7 @@ function App() {
   const [touchStartNote, setTouchStartNote] = useState(null)
   const [touchStartY, setTouchStartY] = useState(0)
   const [touchCurrentNote, setTouchCurrentNote] = useState(null)
+  const notesContainerRef = useRef(null)
 
   // Speichere Notizen in localStorage bei Änderungen
   useEffect(() => {
@@ -145,6 +146,20 @@ function App() {
     const currentY = touch.clientY
     const diff = Math.abs(currentY - touchStartY)
     
+    // Auto-Scroll wenn Finger nah am Rand ist
+    const container = notesContainerRef.current
+    if (container) {
+      const rect = container.getBoundingClientRect()
+      const edgeThreshold = 60
+      const scrollSpeed = 14
+
+      if (touch.clientY < rect.top + edgeThreshold) {
+        container.scrollBy({ top: -scrollSpeed, behavior: 'auto' })
+      } else if (touch.clientY > rect.bottom - edgeThreshold) {
+        container.scrollBy({ top: scrollSpeed, behavior: 'auto' })
+      }
+    }
+
     // Wenn Bewegung > 10px, dann als Drag aktivieren
     if (diff > 10) {
       // Finde die Note unter dem Touch-Punkt
@@ -249,6 +264,7 @@ function App() {
       <main className="main">
         <div 
           className="notes-container"
+          ref={notesContainerRef}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
