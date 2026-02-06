@@ -136,9 +136,6 @@ function App() {
   const handleTouchStart = (e, note) => {
     if (e.target.closest('.delete-btn') || e.target.closest('.checkbox')) return
     
-    // Verhindere Text-Selektion und Scrolling sofort
-    e.preventDefault()
-    
     const touch = e.touches[0]
     touchPositionRef.current = { x: touch.clientX, y: touch.clientY }
 
@@ -152,16 +149,16 @@ function App() {
   const handleTouchMove = (e) => {
     if (!touchStartNote) return
     
-    // Immer preventDefault aufrufen wenn ein Drag aktiv ist
-    e.preventDefault()
-    
     const touch = e.touches[0]
     touchPositionRef.current = { x: touch.clientX, y: touch.clientY }
     const currentY = touch.clientY
     const diff = Math.abs(currentY - touchStartY)
 
-    // Wenn Bewegung > 10px, dann als Drag aktivieren
-    if (diff > 10) {
+    // Wenn Bewegung > 30px, dann als Drag aktivieren
+    if (diff > 30) {
+      // Verhindere Scrolling nur wenn Drag aktiv
+      e.preventDefault()
+      
       if (!isTouchDragging) setIsTouchDragging(true)
       // Finde die Note unter dem Touch-Punkt
       const element = document.elementFromPoint(touch.clientX, touch.clientY)
