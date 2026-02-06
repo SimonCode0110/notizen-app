@@ -21,6 +21,7 @@ function App() {
   const [tempTitle, setTempTitle] = useState(title)
   const [touchStartNote, setTouchStartNote] = useState(null)
   const [touchStartY, setTouchStartY] = useState(0)
+  const [touchCurrentNote, setTouchCurrentNote] = useState(null)
 
   // Speichere Notizen in localStorage bei Änderungen
   useEffect(() => {
@@ -123,6 +124,8 @@ function App() {
 
   // Touch Events für Smartphone-Support
   const handleTouchStart = (e, note) => {
+    if (e.target.closest('.delete-btn')) return // Löschen-Button nicht blockieren
+    
     setTouchStartNote(note)
     setTouchStartY(e.touches[0].clientY)
     setDraggedNote(note)
@@ -134,17 +137,26 @@ function App() {
     const currentY = e.touches[0].clientY
     const diff = Math.abs(currentY - touchStartY)
     
-    // Wenn Bewegung > 10px, dann als Drag aktivieren
-    if (diff > 10 && note.id !== touchStartNote?.id) {
-      setDragOverNote(note)
+    // Wenn Bewegung > 15px, dann als Drag aktivieren
+    if (diff > 15) {
+      if (note.id !== touchStartNote.id) {
+        setTouchCurrentNote(note)
+      }
     }
   }
 
   const handleTouchEnd = (e, targetNote) => {
-    e.preventDefault()
-    
-    if (!touchStartNote || touchStartNote.id === targetNote.id) {
+    if (!touchStartNote || !touchCurrentNote) {
       setTouchStartNote(null)
+      setTouchCurrentNote(null)
+      setDraggedNote(null)
+      setDragOverNote(null)
+      return
+    }
+
+    if (touchStartNote.id === targetNote.id) {
+      setTouchStartNote(null)
+      setTouchCurrentNote(null)
       setDraggedNote(null)
       setDragOverNote(null)
       return
@@ -165,6 +177,7 @@ function App() {
 
     setNotes(reorderedNotes)
     setTouchStartNote(null)
+    setTouchCurrentNote(null)
     setDraggedNote(null)
     setDragOverNote(null)
   }
@@ -229,7 +242,7 @@ function App() {
             <div
               key={note.id}
               className={`note-item ${note.completed ? 'completed' : ''} ${
-                dragOverNote?.id === note.id ? 'drag-over' : ''
+                touchCurrentNote?.id === note.id ? 'drag-over' : ''
               }`}
               draggable
               onDragStart={(e) => handleDragStart(e, note)}
@@ -240,7 +253,6 @@ function App() {
               onTouchStart={(e) => handleTouchStart(e, note)}
               onTouchMove={(e) => handleTouchMove(e, note)}
               onTouchEnd={(e) => handleTouchEnd(e, note)}
-              style={{ touchAction: 'none' }}
             >
               <div className="note-content">
                 <div 
