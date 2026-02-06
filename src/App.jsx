@@ -27,12 +27,6 @@ function App() {
   const touchPositionRef = useRef({ x: 0, y: 0 })
   const autoScrollRafRef = useRef(null)
 
-  const getScrollContainer = () => {
-    const container = mainScrollRef.current
-    if (container && container.scrollHeight > container.clientHeight) return container
-    return document.scrollingElement || document.documentElement
-  }
-
   // Speichere Notizen in localStorage bei Änderungen
   useEffect(() => {
     if (notes.length > 0) {
@@ -231,48 +225,51 @@ function App() {
       return
     }
 
+    let lastScrollTime = 0
+    const scrollDelay = 16 // ~60fps
+
     const step = () => {
-      if (!isTouchDragging) {
-        autoScrollRafRef.current = null
+      const now = Date.now()
+      if (now - lastScrollTime < scrollDelay) {
+        autoScrollRafRef.current = requestAnimationFrame(step)
         return
       }
 
-      const container = getScrollContainer()
+      const container = mainScrollRef.current
       if (!container) {
         autoScrollRafRef.current = requestAnimationFrame(step)
         return
       }
 
       const { y } = touchPositionRef.current
-      if (y == null) {
+      if (y == null || typeof y !== 'number') {
         autoScrollRafRef.current = requestAnimationFrame(step)
         return
       }
 
-      const viewportHeight = window.innerHeight
-      const topThreshold = 150
-      const bottomThreshold = viewportHeight - 150
+      const scrollableHeight = container.scrollHeight - container.clientHeight
+      const edgeSize = 120
+      const maxSpeed = 25
       
-      // Scroll nach oben wenn Finger sehr nah am oberen Rand ist
-      if (y < topThreshold && y >= 0) {
-        if (container.scrollTop > 0) {
-          const distanceFromTop = Math.max(0, topThreshold - y)
-          const maxDistance = topThreshold
-          const factor = Math.pow(distanceFromTop / maxDistance, 0.8)
-          const speed = Math.ceil(factor * 20)
-          container.scrollTop = Math.max(0, container.scrollTop - speed)
-        }
-      } 
-      // Scroll nach unten wenn Finger sehr nah am unteren Rand ist
-      else if (y > bottomThreshold && y <= viewportHeight) {
-        const maxScroll = container.scrollHeight - container.clientHeight
-        if (container.scrollTop < maxScroll) {
-          const distanceFromBottom = Math.max(0, y - bottomThreshold)
-          const maxDistance = viewportHeight - bottomThreshold
-          const factor = Math.pow(distanceFromBottom / maxDistance, 0.8)
-          const speed = Math.ceil(factor * 20)
-          container.scrollTop = Math.min(maxScroll, container.scrollTop + speed)
-        }
+      // Berechne ob am oberen oder unteren Rand
+      const topDistance = Math.max(0, edgeSize - y)
+      const bottomDistance = Math.max(0, y - (window.innerHeight - edgeSize))
+      
+      let didScroll = false
+
+      // Scroll nach oben
+      if (topDistance > 0 && container.scrollTop > 0) {
+        const speed = Math.min(maxSpeed, Math.ceil((topDistance / edgeSize) * maxSpeed))
+        container.scrollTop = Math.max(0, container.scrollTop - speed)
+        didScroll = true
+        lastScrollTime = now
+      }
+      // Scroll nach unten
+      else if (bottomDistance > 0 && container.scrollTop < scrollableHeight) {
+        const speed = Math.min(maxSpeed, Math.ceil((bottomDistance / edgeSize) * maxSpeed))
+        container.scrollTop = Math.min(scrollableHeight, container.scrollTop + speed)
+        didScroll = true
+        lastScrollTime = now
       }
 
       autoScrollRafRef.current = requestAnimationFrame(step)
